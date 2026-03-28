@@ -1,12 +1,10 @@
 import random
 from math import inf
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from connect4.board import Board
+from connect4.board import Board
 
 
-def evaluate(board: "Board", player: int) -> float:
+def evaluate(board: Board, player: int) -> float:
     """Module-level pure function. Only reads the board, never mutates it."""
     opponent = 3 - player  # if player=1 then opponent=2, vice versa
     score = 0.0
@@ -55,7 +53,7 @@ class MinimaxBot:
         self.piece = 0  # set by Game before play starts
         self.opponent = 0  # set by Game before play starts
 
-    def get_move(self, board: "Board") -> int:
+    def get_move(self, board: Board) -> int:
         """Run minimax on each valid column, return the column with the highest score.
 
         Ties broken randomly.
@@ -79,7 +77,7 @@ class MinimaxBot:
 
     def _minimax(
         self,
-        board: "Board",
+        board: Board,
         depth: int,
         is_maximizing: bool,
         alpha: float,

@@ -36,7 +36,7 @@ class Board:
         Returns the winning player number (1 or 2), or None.
         Checks 4 directions: horizontal (0,1), vertical (1,0),
         diagonal down-right (1,1), diagonal up-right (1,-1).
-        Only checks "positive" directions to avoid double-counting.
+        Only one orientation per line (canonical directions).
         """
         directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
         for r in range(self.rows):

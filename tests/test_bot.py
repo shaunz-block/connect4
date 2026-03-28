@@ -33,9 +33,6 @@ class TestEvaluate:
         for c in range(3):
             b.drop_piece(c, 2)
         score_for_player1 = evaluate(b, 1)
-        # Should have a penalty (negative component from opponent threat)
-        # The exact sign depends on other bonuses, but the opponent threat
-        # must reduce the score compared to an empty board
         empty_score = evaluate(Board(), 1)
         assert score_for_player1 < empty_score
 
