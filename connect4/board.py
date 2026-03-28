@@ -51,8 +51,7 @@ class Board:
                     if not (0 <= end_r < self.rows and 0 <= end_c < self.cols):
                         continue
                     if all(
-                        self.grid[r + dr * i][c + dc * i] == player
-                        for i in range(self.connect_n)
+                        self.grid[r + dr * i][c + dc * i] == player for i in range(self.connect_n)
                     ):
                         return player
         return None

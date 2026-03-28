@@ -18,3 +18,18 @@ connect4 = "connect4.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["connect4"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.8",
+]
+
+[tool.ruff]
+line-length = 102
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -52,8 +52,8 @@ class MinimaxBot:
     def __init__(self, name: str = "Bot", depth: int = 4):
         self.name = name
         self.depth = depth
-        self.piece = 0      # set by Game before play starts
-        self.opponent = 0   # set by Game before play starts
+        self.piece = 0  # set by Game before play starts
+        self.opponent = 0  # set by Game before play starts
 
     def get_move(self, board: "Board") -> int:
         """Run minimax on each valid column, return the column with the highest score.

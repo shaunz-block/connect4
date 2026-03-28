@@ -1,10 +1,8 @@
-import pytest
-
 from connect4.board import Board
 from connect4.bot import MinimaxBot, evaluate
 
-
 # --- evaluate() ---
+
 
 class TestEvaluate:
     def test_empty_board_score_is_zero_or_near(self):
@@ -43,6 +41,7 @@ class TestEvaluate:
 
 
 # --- MinimaxBot.get_move() — Win detection ---
+
 
 class TestBotWinDetection:
     def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
@@ -98,6 +97,7 @@ class TestBotWinDetection:
 
 # --- MinimaxBot.get_move() — Block opponent ---
 
+
 class TestBotBlocking:
     def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
         bot = MinimaxBot(depth=depth)
@@ -131,6 +131,7 @@ class TestBotBlocking:
 
 
 # --- Edge cases ---
+
 
 class TestBotEdgeCases:
     def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
@@ -167,10 +168,12 @@ class TestBotEdgeCases:
 
 # --- Bot vs Bot integration ---
 
+
 class TestBotVsBot:
     def test_deeper_bot_wins_more(self):
         """depth=4 bot should beat depth=2 bot more often than not."""
         import random
+
         random.seed(42)
 
         NUM_GAMES = 5

@@ -2,8 +2,8 @@ import pytest
 
 from connect4.board import Board
 
-
 # --- __init__ ---
+
 
 class TestBoardInit:
     def test_default_board_dimensions(self):
@@ -44,6 +44,7 @@ class TestBoardInit:
 
 # --- drop_piece ---
 
+
 class TestDropPiece:
     def test_drop_into_empty_column_lands_at_bottom(self):
         b = Board()
@@ -74,6 +75,7 @@ class TestDropPiece:
 
 # --- is_valid_move ---
 
+
 class TestIsValidMove:
     def test_empty_column_is_valid(self):
         b = Board()
@@ -95,6 +97,7 @@ class TestIsValidMove:
 
 
 # --- check_winner ---
+
 
 class TestCheckWinner:
     def test_horizontal_winner(self):
@@ -184,6 +187,7 @@ class TestCheckWinner:
 
 # --- is_full ---
 
+
 class TestIsFull:
     def test_empty_board_not_full(self):
         b = Board()
@@ -203,6 +207,7 @@ class TestIsFull:
 
 
 # --- get_valid_moves ---
+
 
 class TestGetValidMoves:
     def test_empty_board_all_columns(self):
@@ -227,6 +232,7 @@ class TestGetValidMoves:
 
 
 # --- undo_move ---
+
 
 class TestUndoMove:
     def test_drop_then_undo_is_empty(self):

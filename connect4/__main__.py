@@ -20,9 +20,7 @@ def main() -> None:
     )
     parser.add_argument("--rows", type=int, default=6, help="Number of rows (default: 6)")
     parser.add_argument("--cols", type=int, default=7, help="Number of cols (default: 7)")
-    parser.add_argument(
-        "--connect-n", type=int, default=4, help="Connect N to win (default: 4)"
-    )
+    parser.add_argument("--connect-n", type=int, default=4, help="Connect N to win (default: 4)")
     args = parser.parse_args()
 
     player1 = HumanPlayer("Player 1")

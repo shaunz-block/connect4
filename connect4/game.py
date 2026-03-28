@@ -10,8 +10,8 @@ class Game:
     def _setup_players(self) -> None:
         for i, player in enumerate(self.players):
             if hasattr(player, "piece"):
-                player.piece = i + 1      # 1 or 2
-                player.opponent = 2 - i   # 2 or 1
+                player.piece = i + 1  # 1 or 2
+                player.opponent = 2 - i  # 2 or 1
 
     def play(self) -> None:
         """Run the game loop."""
