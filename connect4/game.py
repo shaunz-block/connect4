@@ -1,8 +1,11 @@
 from connect4.board import Board
+from connect4.player import Player
 
 
 class Game:
-    def __init__(self, player1, player2, rows: int = 6, cols: int = 7, connect_n: int = 4):
+    def __init__(
+        self, player1: Player, player2: Player, rows: int = 6, cols: int = 7, connect_n: int = 4
+    ):
         self.board = Board(rows, cols, connect_n)
         self.players = [player1, player2]
         self.current_turn = 0
