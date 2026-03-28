@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "connect4"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+connect4 = "connect4.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["connect4"]
