@@ -36,7 +36,7 @@ Requires Python 3.10+ and [uv](https://github.com/astral-sh/uv).
 ```bash
 # Create virtual environment and install in editable mode with dev deps
 uv venv
-uv pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 ## Usage
@@ -85,17 +85,20 @@ game.play()
 
 Encapsulates all grid state and rule logic. Config is bound at creation time.
 
-| Method | Description |
-|---|---|
-| `drop_piece(col, player)` | Drops a piece; returns landing row or `None` if full |
-| `undo_move(col)` | Removes the topmost piece — used by minimax for backtracking |
-| `check_winner()` | Returns winning player (1 or 2) or `None` |
-| `is_valid_move(col)` | `True` if column is in range and not full |
-| `is_full()` | `True` if every column is full (draw condition) |
-| `get_valid_moves()` | List of playable column indices |
-| `print_board()` | Prints grid to terminal (`X`/`O`/`.`) with column numbers |
+
+| Method                    | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `drop_piece(col, player)` | Drops a piece; returns landing row or `None` if full         |
+| `undo_move(col)`          | Removes the topmost piece — used by minimax for backtracking |
+| `check_winner()`          | Returns winning player (1 or 2) or `None`                    |
+| `is_valid_move(col)`      | `True` if column is in range and not full                    |
+| `is_full()`               | `True` if every column is full (draw condition)              |
+| `get_valid_moves()`       | List of playable column indices                              |
+| `print_board()`           | Prints grid to terminal (`X`/`O`/`.`) with column numbers    |
+
 
 Key design decisions:
+
 - `grid[0]` is the **top** row; `grid[rows-1]` is the **bottom** row. Pieces fall from the bottom up.
 - Player values are `1` and `2`; `0` means empty.
 - `undo_move` enables minimax backtracking without copying the board.
@@ -110,7 +113,8 @@ Key design decisions:
 
 `MinimaxBot` uses recursive minimax with alpha-beta pruning. `piece` and `opponent` are assigned by `Game._setup_players()` before the game starts.
 
-**`evaluate(board, player)`** — module-level pure function, called at depth-limit leaf nodes:
+`**evaluate(board, player)`** — module-level pure function, called at depth-limit leaf nodes:
+
 - **Center preference**: +6 per piece in the center column
 - **Window scoring**: scans every `connect_n`-length window in 4 directions:
   - `n-1` own + 1 empty → +25 (one away from winning)
@@ -120,12 +124,14 @@ Key design decisions:
 
 **Bot depth guidelines:**
 
-| depth | approx nodes | approx time | strength |
-|---|---|---|---|
-| 2 | ~50 | <1 ms | Sees immediate win/block |
-| 4 | ~2,400 | ~5 ms | Sees simple traps (default) |
-| 6 | ~120,000 | ~50 ms | Sees most tactical combos |
-| 8 | ~5,800,000 | ~2 s | Very strong, noticeable delay |
+
+| depth | approx nodes | approx time | strength                      |
+| ----- | ------------ | ----------- | ----------------------------- |
+| 2     | ~50          | <1 ms       | Sees immediate win/block      |
+| 4     | ~2,400       | ~5 ms       | Sees simple traps (default)   |
+| 6     | ~120,000     | ~50 ms      | Sees most tactical combos     |
+| 8     | ~5,800,000   | ~2 s        | Very strong, noticeable delay |
+
 
 ### `game.py` — Game
 
