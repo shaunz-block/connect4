@@ -8,30 +8,30 @@ class TestEvaluate:
     def test_empty_board_score_is_zero_or_near(self):
         b = Board()
         score = evaluate(b, 1)
-        # Empty board: no center pieces, no windows with pieces -> score == 0
+        # Empty board: no center discs, no windows with discs -> score == 0
         assert score == 0
 
     def test_center_column_gives_positive_score(self):
         b = Board()
         center = b.cols // 2
-        b.drop_piece(center, 1)
+        b.drop_disc(center, 1)
         score = evaluate(b, 1)
         # Center bonus of 6, plus window bonuses
         assert score > 0
 
     def test_three_in_a_row_with_open_end_gives_high_score(self):
         b = Board()
-        # Place 3 pieces in a row for player 1 (columns 0,1,2 leaving 3 open)
+        # Place 3 discs in a row for player 1 (columns 0,1,2 leaving 3 open)
         for c in range(3):
-            b.drop_piece(c, 1)
+            b.drop_disc(c, 1)
         score = evaluate(b, 1)
         assert score > 0
 
     def test_opponent_three_in_a_row_gives_negative_penalty(self):
         b = Board()
-        # Place 3 pieces for opponent (player 2) in columns 0,1,2
+        # Place 3 discs for opponent (player 2) in columns 0,1,2
         for c in range(3):
-            b.drop_piece(c, 2)
+            b.drop_disc(c, 2)
         score_for_player1 = evaluate(b, 1)
         empty_score = evaluate(Board(), 1)
         assert score_for_player1 < empty_score
@@ -41,20 +41,20 @@ class TestEvaluate:
 
 
 class TestBotWinDetection:
-    def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
+    def _make_bot(self, player_id: int, depth: int = 4) -> MinimaxBot:
         bot = MinimaxBot(depth=depth)
-        bot.piece = piece
-        bot.opponent = 3 - piece
+        bot.player_id = player_id
+        bot.opponent_id = 3 - player_id
         return bot
 
     def test_bot_wins_horizontally(self):
         """Bot has 3 in a row, 4th slot open — should play winning column."""
         b = Board()
-        bot = self._make_bot(piece=1)
-        # Place 3 pieces for bot at columns 0,1,2 (row 5)
-        b.drop_piece(0, 1)
-        b.drop_piece(1, 1)
-        b.drop_piece(2, 1)
+        bot = self._make_bot(player_id=1)
+        # Place 3 discs for bot at columns 0,1,2 (row 5)
+        b.drop_disc(0, 1)
+        b.drop_disc(1, 1)
+        b.drop_disc(2, 1)
         # Column 3 is the winning move
         move = bot.get_move(b)
         assert move == 3
@@ -62,31 +62,31 @@ class TestBotWinDetection:
     def test_bot_wins_vertically(self):
         """Bot has 3 in a column, should play to complete 4."""
         b = Board()
-        bot = self._make_bot(piece=1)
-        # Drop 3 pieces into column 0
-        b.drop_piece(0, 1)
-        b.drop_piece(0, 1)
-        b.drop_piece(0, 1)
-        # Winning move is column 0 (4th piece)
+        bot = self._make_bot(player_id=1)
+        # Drop 3 discs into column 0
+        b.drop_disc(0, 1)
+        b.drop_disc(0, 1)
+        b.drop_disc(0, 1)
+        # Winning move is column 0 (4th disc)
         move = bot.get_move(b)
         assert move == 0
 
     def test_bot_wins_diagonally(self):
-        """Bot has 3 diagonal pieces, should complete the diagonal."""
+        """Bot has 3 diagonal discs, should complete the diagonal."""
         b = Board()
-        bot = self._make_bot(piece=1, depth=3)
+        bot = self._make_bot(player_id=1, depth=3)
         # Build diagonal ↘: player 1 at rows 5,4,3 for cols 0,1,2
         # We need to set up so col 3 is the winning move at row 2
-        b.drop_piece(0, 1)  # (5,0)
-        b.drop_piece(1, 2)
-        b.drop_piece(1, 1)  # (4,1)
-        b.drop_piece(2, 2)
-        b.drop_piece(2, 2)
-        b.drop_piece(2, 1)  # (3,2)
-        # Col 3 needs 3 padding pieces so player 1 lands at row 2
-        b.drop_piece(3, 2)
-        b.drop_piece(3, 2)
-        b.drop_piece(3, 2)
+        b.drop_disc(0, 1)  # (5,0)
+        b.drop_disc(1, 2)
+        b.drop_disc(1, 1)  # (4,1)
+        b.drop_disc(2, 2)
+        b.drop_disc(2, 2)
+        b.drop_disc(2, 1)  # (3,2)
+        # Col 3 needs 3 padding discs so player 1 lands at row 2
+        b.drop_disc(3, 2)
+        b.drop_disc(3, 2)
+        b.drop_disc(3, 2)
         # Now playing col 3 places player 1 at (2,3) completing the diagonal
         move = bot.get_move(b)
         assert move == 3
@@ -96,20 +96,20 @@ class TestBotWinDetection:
 
 
 class TestBotBlocking:
-    def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
+    def _make_bot(self, player_id: int, depth: int = 4) -> MinimaxBot:
         bot = MinimaxBot(depth=depth)
-        bot.piece = piece
-        bot.opponent = 3 - piece
+        bot.player_id = player_id
+        bot.opponent_id = 3 - player_id
         return bot
 
     def test_bot_blocks_horizontal_threat(self):
         """Opponent has 3 in a row horizontally, bot should block."""
         b = Board()
-        bot = self._make_bot(piece=2)
-        # Opponent (player 1) has pieces at columns 0,1,2
-        b.drop_piece(0, 1)
-        b.drop_piece(1, 1)
-        b.drop_piece(2, 1)
+        bot = self._make_bot(player_id=2)
+        # Opponent (player 1) has discs at columns 0,1,2
+        b.drop_disc(0, 1)
+        b.drop_disc(1, 1)
+        b.drop_disc(2, 1)
         # Bot must play column 3 to block
         move = bot.get_move(b)
         assert move == 3
@@ -117,11 +117,11 @@ class TestBotBlocking:
     def test_bot_blocks_vertical_threat(self):
         """Opponent has 3 in a column, bot should block on top."""
         b = Board()
-        bot = self._make_bot(piece=2)
+        bot = self._make_bot(player_id=2)
         # Opponent (player 1) has 3 in column 0
-        b.drop_piece(0, 1)
-        b.drop_piece(0, 1)
-        b.drop_piece(0, 1)
+        b.drop_disc(0, 1)
+        b.drop_disc(0, 1)
+        b.drop_disc(0, 1)
         # Bot must play column 0 to block
         move = bot.get_move(b)
         assert move == 0
@@ -131,19 +131,19 @@ class TestBotBlocking:
 
 
 class TestBotEdgeCases:
-    def _make_bot(self, piece: int, depth: int = 4) -> MinimaxBot:
+    def _make_bot(self, player_id: int, depth: int = 4) -> MinimaxBot:
         bot = MinimaxBot(depth=depth)
-        bot.piece = piece
-        bot.opponent = 3 - piece
+        bot.player_id = player_id
+        bot.opponent_id = 3 - player_id
         return bot
 
     def test_only_one_valid_move(self):
         """Only one column available — bot must pick it."""
         b = Board(rows=2, cols=2, connect_n=2)
-        bot = self._make_bot(piece=1, depth=2)
+        bot = self._make_bot(player_id=1, depth=2)
         # Fill column 0 completely
-        b.drop_piece(0, 2)
-        b.drop_piece(0, 2)
+        b.drop_disc(0, 2)
+        b.drop_disc(0, 2)
         # Only column 1 remains
         move = bot.get_move(b)
         assert move == 1
@@ -153,11 +153,11 @@ class TestBotEdgeCases:
         b = Board(rows=4, cols=4, connect_n=3)
         # Use depth=1 so bot only sees the immediate next move
         bot = MinimaxBot(depth=1)
-        bot.piece = 1
-        bot.opponent = 2
+        bot.player_id = 1
+        bot.opponent_id = 2
         # Bot has 2 in a row; col 2 is the only immediate win (horizontal)
-        b.drop_piece(0, 1)
-        b.drop_piece(1, 1)
+        b.drop_disc(0, 1)
+        b.drop_disc(1, 1)
         move = bot.get_move(b)
         # At depth=1 the only winning move is col 2
         assert move == 2
@@ -179,11 +179,11 @@ class TestBotVsBot:
         for _ in range(NUM_GAMES):
             b = Board()
             strong = MinimaxBot(name="Strong", depth=4)
-            strong.piece = 1
-            strong.opponent = 2
+            strong.player_id = 1
+            strong.opponent_id = 2
             weak = MinimaxBot(name="Weak", depth=2)
-            weak.piece = 2
-            weak.opponent = 1
+            weak.player_id = 2
+            weak.opponent_id = 1
 
             bots = [strong, weak]
             current = 0
@@ -191,12 +191,12 @@ class TestBotVsBot:
             while True:
                 bot = bots[current]
                 col = bot.get_move(b)
-                b.drop_piece(col, bot.piece)
+                b.drop_disc(col, bot.player_id)
                 winner = b.check_winner()
-                if winner == strong.piece:
+                if winner == strong.player_id:
                     strong_wins += 1
                     break
-                if winner == weak.piece:
+                if winner == weak.player_id:
                     break
                 if b.is_full():
                     break

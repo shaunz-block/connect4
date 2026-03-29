@@ -2,7 +2,18 @@
 
 ## 1. Overview
 
-A configurable Connect N game implemented as a Python package. Two players take turns dropping pieces into a vertical grid. The first player to align N pieces in a row (horizontal, vertical, or diagonal) wins.
+A configurable Connect N game implemented as a Python package. Two players take turns **dropping discs** into a vertical grid. The first player to align **N discs** in a row (horizontal, vertical, or diagonal) wins.
+
+**Terminology (used throughout this document):**
+
+| Term | Meaning |
+|------|---------|
+| **Drop** | The only move: one disc falls into the lowest free cell in the chosen column. |
+| **Disc** | One token on the board; cells store **player id** `1` or `2`, not shapes. |
+| **Player id** | `1` or `2` — who owns a disc; whose turn it is. |
+| **Symbols `X` / `O`** | Terminal display in `print_board` only (`X` = id 1, `O` = id 2). |
+
+`Board.drop_disc(col, player_id)` takes a **player id**. `MinimaxBot` uses attributes `player_id` and `opponent_id`.
 
 ### Scope (v1)
 
@@ -52,9 +63,9 @@ class Board:
         self.connect_n = connect_n
         self.grid: list[list[int]] = [[0] * cols for _ in range(rows)]
 
-    def drop_piece(self, col: int, player: int) -> int | None:
+    def drop_disc(self, col: int, player_id: int) -> int | None:
         """
-        Drop a piece into the given column.
+        Drop one disc into the given column for the given player id.
         Returns the row where it landed, or None if the column is full.
         Does NOT validate col range — caller should use is_valid_move() first.
         """
@@ -78,13 +89,13 @@ class Board:
 
     def get_valid_moves(self) -> list[int]:
         """
-        Returns list of column indices that can still accept a piece.
+        Returns list of column indices that can still accept a disc.
         Useful for AI players later.
         """
 
     def undo_move(self, col: int) -> None:
         """
-        Remove the topmost piece from the given column.
+        Remove the topmost disc from the given column.
         Used by minimax to efficiently explore/backtrack
         without copying the entire board.
         """
@@ -98,10 +109,10 @@ class Board:
 
 **Design decisions:**
 
-- `grid[0]` is the TOP row, `grid[rows-1]` is the BOTTOM row. `drop_piece` scans from bottom up.
+- `grid[0]` is the TOP row, `grid[rows-1]` is the BOTTOM row. `drop_disc` scans from bottom up.
 - Player values are 1 and 2 (not 0, since 0 = empty).
 - `check_winner` scans every cell as a potential starting point, checking rightward, downward, and both diagonals. Only needs to check in "positive" directions to avoid double-counting.
-- `drop_piece` mutates the grid in place and returns the row. Returns None (not raises) for full column — this allows the game loop to re-prompt gracefully.
+- `drop_disc` mutates the grid in place and returns the row. Returns None (not raises) for full column — this allows the game loop to re-prompt gracefully.
 
 ### 3.2 player.py — Player Protocol
 
@@ -115,7 +126,7 @@ class Player(Protocol):
     name: str
 
     def get_move(self, board: "Board") -> int:
-        """Return the column index to drop a piece into."""
+        """Return the column index for the next drop."""
         ...
 
 class HumanPlayer:
@@ -149,8 +160,8 @@ class MinimaxBot:
     def __init__(self, name: str = "Bot", depth: int = 4):
         self.name = name
         self.depth = depth
-        self.piece = 0        # set by Game before play starts
-        self.opponent = 0     # set by Game before play starts
+        self.player_id = 0        # 1 or 2 — set by Game before play
+        self.opponent_id = 0      # opponent's player id — set by Game before play
 
     def get_move(self, board: "Board") -> int:
         """
@@ -166,14 +177,14 @@ class MinimaxBot:
         - Minimizing player = opponent (wants lowest score)
         """
 
-    def evaluate(board: "Board", player: int) -> float:
+    def evaluate(board: "Board", player_id: int) -> float:
         """
         Pure static evaluation of a board position. Module-level function.
         Does NOT simulate any moves — only reads current grid state.
         Called at minimax leaf nodes (depth == 0, game not over).
 
         Scoring components:
-          - Center preference: pieces near center columns score higher
+          - Center preference: own discs near center columns score higher
           - Window scoring: scan all connect_n windows in 4 directions
         """
 ```
@@ -195,18 +206,18 @@ depth=6+ →  very strong AI (near-optimal play)
 def _minimax(board, depth, is_maximizing, alpha, beta):
     # Terminal checks
     winner = board.check_winner()
-    if winner == self.piece:    return +10000
-    if winner == self.opponent: return -10000
+    if winner == self.player_id:    return +10000
+    if winner == self.opponent_id: return -10000
     if board.is_full():         return 0
 
     # Depth limit — use static evaluation
     if depth == 0:
-        return evaluate(board, self.piece)
+        return evaluate(board, self.player_id)
 
     if is_maximizing:
         max_score = -inf
         for col in board.get_valid_moves():
-            board.drop_piece(col, self.piece)
+            board.drop_disc(col, self.player_id)
             score = _minimax(board, depth - 1, False, alpha, beta)
             board.undo_move(col)           # backtrack, no deepcopy needed
             max_score = max(max_score, score)
@@ -218,7 +229,7 @@ def _minimax(board, depth, is_maximizing, alpha, beta):
     else:  # minimizing
         min_score = +inf
         for col in board.get_valid_moves():
-            board.drop_piece(col, self.opponent)
+            board.drop_disc(col, self.opponent_id)
             score = _minimax(board, depth - 1, True, alpha, beta)
             board.undo_move(col)
             min_score = min(min_score, score)
@@ -239,20 +250,20 @@ Key points:
 A module-level pure function. Only reads the board, never mutates it.
 
 ```python
-def evaluate(board, player) -> float:
-    opponent = 3 - player  # if player=1 then opponent=2, vice versa
+def evaluate(board, player_id) -> float:
+    opponent_id = 3 - player_id
     score = 0
 
     # Center preference
     center_col = board.cols // 2
     for row in range(board.rows):
-        if board.grid[row][center_col] == player:
+        if board.grid[row][center_col] == player_id:
             score += 6
 
     # Window scoring: scan all connect_n windows in 4 directions
     for each window of length connect_n on the board:
-        own   = count of player pieces in window
-        opp   = count of opponent pieces in window
+        own   = count of own discs in window
+        opp   = count of opponent discs in window
         empty = count of empty cells in window
 
         if own == connect_n - 1 and empty == 1:
@@ -268,7 +279,7 @@ def evaluate(board, player) -> float:
     return score
 ```
 
-Note: evaluate scores from `player`'s perspective. A positive score means the position favors `player`. The window scan covers the entire board, not just the last move — this is correct for a static evaluation where we don't know which move led here.
+Note: evaluate scores from `player_id`'s perspective. A positive score means the position favors that player. The window scan covers the entire board, not just the last move — this is correct for a static evaluation where we don't know which move led here.
 
 #### Depth selection guidelines
 
@@ -291,25 +302,25 @@ class Game:
         self.players = [player1, player2]
         self.current_turn = 0  # index into self.players
 
-    def _setup_players(self) -> None:
+    def _setup_bot_players(self) -> None:
         """
-        Assign piece/opponent info to MinimaxBots.
+        Assign player_id / opponent_id to MinimaxBots.
         Called once before the game loop starts.
         Uses hasattr check — HumanPlayers don't need this.
         """
         for i, player in enumerate(self.players):
-            if hasattr(player, 'piece'):
-                player.piece = i + 1        # 1 or 2
-                player.opponent = 2 - i      # 2 or 1
+            if hasattr(player, "player_id"):
+                player.player_id = i + 1        # 1 or 2
+                player.opponent_id = 2 - i      # 2 or 1
 
     def play(self) -> None:
         """
         Main game loop:
-        0. Setup bot players (assign piece numbers)
+        0. Setup bot players (assign player ids)
         1. Print board
         2. Get move from current player
         3. Validate move (re-prompt if invalid)
-        4. Drop piece
+        4. Drop disc (for current player's id)
         5. Check for winner → announce and stop
         6. Check for full board → announce draw and stop
         7. Switch player, repeat
@@ -323,7 +334,8 @@ class Game:
         return self.players[self.current_turn]
 
     @property
-    def current_piece(self) -> int:
+    def current_player_id(self) -> int:
+        """Player id (1 or 2) for the current turn — used when dropping a disc."""
         return self.current_turn + 1  # 1 or 2
 ```
 
@@ -343,7 +355,7 @@ The Game doesn't know how a player decides. The Player doesn't know the rules. T
 
 ## 4. Key Algorithms
 
-### 4.1 drop_piece — Gravity Simulation
+### 4.1 drop_disc — Gravity Simulation
 
 ```
 scan from row = rows-1 (bottom) up to row = 0 (top):
@@ -357,7 +369,7 @@ return None  # column is full
 
 For each cell (r, c) that is non-zero:
 - Check 4 directions: right (0,1), down (1,0), diagonal-down-right (1,1), diagonal-down-left (1,-1)
-- For each direction, count consecutive same-player pieces
+- For each direction, count consecutive discs of the same player id
 - If count >= connect_n, that player wins
 
 Only checking "positive" directions avoids double-counting. We don't need to check left, up, etc.
@@ -379,7 +391,7 @@ scan from row = 0 (top) down to row = rows-1 (bottom):
         return
 ```
 
-The inverse of `drop_piece`. Finds the topmost piece in a column and removes it.
+The inverse of `drop_disc`. Finds the topmost disc in a column and removes it.
 
 ### 4.5 Minimax — Recursive Search
 
@@ -417,8 +429,8 @@ Scans all possible connect_n windows across the entire board in 4 directions (ho
 ```
     # Window scoring: scan all connect_n windows in 4 directions
     for each window of length connect_n on the board:
-        own   = count of player pieces in window
-        opp   = count of opponent pieces in window
+        own   = count of own discs in window
+        opp   = count of opponent discs in window
         empty = count of empty cells in window
 
         if own == connect_n - 1 and empty == 1:
@@ -434,7 +446,7 @@ Scans all possible connect_n windows across the entire board in 4 directions (ho
     return score
 ```
 
-The key insight: a window containing both players' pieces is useless to either side, so we skip it. Only "pure" windows (one player + empty cells) have strategic value.
+The key insight: a window containing both players' discs is useless to either side, so we skip it. Only "pure" windows (one player id + empty cells) have strategic value.
 
 ---
 
@@ -451,14 +463,14 @@ The key insight: a window containing both players' pieces is useless to either s
 | connect_n > max(rows, cols)        | Raises ValueError                 |
 | Each row is independent (not same ref) | Modify one row, others unchanged |
 
-**drop_piece:**
+**drop_disc:**
 
 | Test Case                          | Expected                          |
 |------------------------------------|-----------------------------------|
 | Drop into empty column             | Lands at bottom row (rows-1)      |
-| Drop two pieces same column        | Second piece at rows-2            |
+| Drop two discs same column         | Second disc at rows-2             |
 | Fill entire column, drop one more  | Returns None                      |
-| Player value is correctly placed   | grid[row][col] == player          |
+| Player id is correctly placed      | grid[row][col] == player          |
 
 **is_valid_move:**
 
@@ -504,8 +516,8 @@ The key insight: a window containing both players' pieces is useless to either s
 | Test Case                          | Expected                          |
 |------------------------------------|-----------------------------------|
 | Drop then undo                     | Cell is empty again               |
-| Drop two, undo one                 | Only top piece removed            |
-| Drop, undo, drop again             | Piece lands at same row           |
+| Drop two, undo one                 | Only top disc removed             |
+| Drop, undo, drop again             | Next disc lands at same row       |
 
 ### 5.2 test_player.py — Unit Tests
 
@@ -524,7 +536,7 @@ Tests for both MinimaxBot behavior and the evaluate() function.
 | Test Case                                    | Expected                           |
 |----------------------------------------------|------------------------------------|
 | Empty board                                  | score ≈ 0                          |
-| Center column has player pieces              | Positive score (center bonus)      |
+| Center column has own discs                  | Positive score (center bonus)      |
 | Player has 3-in-a-row with open end          | High positive score                |
 | Opponent has 3-in-a-row with open end        | Negative score (defensive penalty) |
 | Board with equal positions for both          | score ≈ 0                          |
@@ -603,7 +615,7 @@ Phase 3: Bot
 
 Phase 4: Game (integration)
   ├── Implement Game class
-  ├── Wire up piece assignment for MinimaxBot
+  ├── Wire up player id assignment for MinimaxBot
   ├── Write test_game.py
   ├── All tests green ✓
   └── Manual play-test (Human vs Human, Human vs Bot)

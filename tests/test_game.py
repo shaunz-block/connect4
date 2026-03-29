@@ -1,5 +1,3 @@
-import pytest
-
 from connect4.game import Game
 
 
@@ -18,7 +16,7 @@ class TestGameP1Win:
     def test_scripted_p1_win(self, capsys):
         """Player 1 wins by placing 4 in a row horizontally at bottom row."""
         # Turn sequence: p1->0, p2->0, p1->1, p2->1, p1->2, p2->2, p1->3
-        # After this, p1 has pieces at (5,0),(5,1),(5,2),(5,3) → horizontal win
+        # After this, p1 has discs at (5,0),(5,1),(5,2),(5,3) → horizontal win
         p1 = ScriptedPlayer("Alice", [0, 1, 2, 3])
         p2 = ScriptedPlayer("Bob", [0, 1, 2])
 

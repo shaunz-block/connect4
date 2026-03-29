@@ -44,12 +44,14 @@ connect4/__main__.py — CLI entry point (argparse)
 
 ## Key Conventions
 
-- `grid[0]` = **top** row; `grid[rows-1]` = **bottom** row. Pieces fall from the bottom up.
-- Player values: `1` and `2`. Empty cell = `0`.
-- `drop_piece` returns `None` (not raises) when a column is full — the game loop handles re-prompting.
+**Words:** A **drop** places one **disc** in a column. **Player ids** `1` and `2` identify who owns each disc (not `X`/`O`—those are terminal **symbols** only). `MinimaxBot` uses `player_id` / `opponent_id` for the same.
+
+- `grid[0]` = **top** row; `grid[rows-1]` = **bottom** row. Discs fall toward the bottom (columns fill from the bottom up).
+- Cell values: **player id** `1` or `2`; empty = `0`.
+- `drop_disc` returns `None` (not raises) when a column is full — the game loop handles re-prompting.
 - `undo_move` enables minimax backtracking **without deepcopy** — do not replace with board copying.
 - `evaluate()` is a **pure module-level function** — it must never mutate the board.
-- `MinimaxBot.piece` and `.opponent` are set by `Game._setup_players()` before `play()` — they are `0` until then.
+- `MinimaxBot.player_id` and `.opponent_id` are set by `Game._setup_bot_players()` before `play()` — they are `0` until then (then hold `1`/`2`).
 
 ## Adding a New Player Type
 

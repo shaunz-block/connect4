@@ -4,15 +4,15 @@ from math import inf
 from connect4.board import Board
 
 
-def evaluate(board: Board, player: int) -> float:
+def evaluate(board: Board, player_id: int) -> float:
     """Module-level pure function. Only reads the board, never mutates it."""
-    opponent = 3 - player  # if player=1 then opponent=2, vice versa
+    opponent_id = 3 - player_id
     score = 0.0
 
     # Center preference
     center_col = board.cols // 2
     for row in range(board.rows):
-        if board.grid[row][center_col] == player:
+        if board.grid[row][center_col] == player_id:
             score += 6
 
     # Window scoring: scan all connect_n windows in 4 directions
@@ -29,8 +29,8 @@ def evaluate(board: Board, player: int) -> float:
                     continue
 
                 window = [board.grid[r + dr * i][c + dc * i] for i in range(n)]
-                own = window.count(player)
-                opp = window.count(opponent)
+                own = window.count(player_id)
+                opp = window.count(opponent_id)
                 empty = window.count(0)
 
                 if own == n - 1 and empty == 1:
@@ -50,8 +50,8 @@ class MinimaxBot:
     def __init__(self, name: str = "Bot", depth: int = 4):
         self.name = name
         self.depth = depth
-        self.piece = 0  # set by Game before play starts
-        self.opponent = 0  # set by Game before play starts
+        self.player_id = 0  # set by Game before play starts
+        self.opponent_id = 0  # set by Game before play starts
 
     def get_move(self, board: Board) -> int:
         """Run minimax on each valid column, return the column with the highest score.
@@ -63,7 +63,7 @@ class MinimaxBot:
         best_cols: list[int] = []
 
         for col in valid_moves:
-            board.drop_piece(col, self.piece)
+            board.drop_disc(col, self.player_id)
             score = self._minimax(board, self.depth - 1, False, -inf, +inf)
             board.undo_move(col)
 
@@ -85,20 +85,20 @@ class MinimaxBot:
     ) -> float:
         """Recursive minimax with alpha-beta pruning."""
         winner = board.check_winner()
-        if winner == self.piece:
+        if winner == self.player_id:
             return +10000
-        if winner == self.opponent:
+        if winner == self.opponent_id:
             return -10000
         if board.is_full():
             return 0
 
         if depth == 0:
-            return evaluate(board, self.piece)
+            return evaluate(board, self.player_id)
 
         if is_maximizing:
             max_score = -inf
             for col in board.get_valid_moves():
-                board.drop_piece(col, self.piece)
+                board.drop_disc(col, self.player_id)
                 score = self._minimax(board, depth - 1, False, alpha, beta)
                 board.undo_move(col)
                 max_score = max(max_score, score)
@@ -109,7 +109,7 @@ class MinimaxBot:
         else:
             min_score = +inf
             for col in board.get_valid_moves():
-                board.drop_piece(col, self.opponent)
+                board.drop_disc(col, self.opponent_id)
                 score = self._minimax(board, depth - 1, True, alpha, beta)
                 board.undo_move(col)
                 min_score = min(min_score, score)

@@ -10,23 +10,23 @@ class Game:
         self.players = [player1, player2]
         self.current_turn = 0
 
-    def _setup_players(self) -> None:
+    def _setup_bot_players(self) -> None:
         for i, player in enumerate(self.players):
-            if hasattr(player, "piece"):
-                player.piece = i + 1  # 1 or 2
-                player.opponent = 2 - i  # 2 or 1
+            if hasattr(player, "player_id"):
+                player.player_id = i + 1  # 1 or 2
+                player.opponent_id = 2 - i  # 2 or 1
 
     def play(self) -> None:
         """Run the game loop."""
-        # 0. Setup bot players
-        self._setup_players()
+        # 0. Assign player_id / opponent_id for bot players (e.g. MinimaxBot)
+        self._setup_bot_players()
 
         while True:
             # 1. Print board
             self.board.print_board()
 
             player = self.current_player
-            piece = self.current_piece
+            player_id = self.current_player_id
 
             # 2. Get move from current player
             col = player.get_move(self.board)
@@ -37,8 +37,8 @@ class Game:
                 print(f"Invalid move: column {col}. Try again.")
                 col = player.get_move(self.board)
 
-            # 4. Drop piece
-            self.board.drop_piece(col, piece)
+            # 4. Drop disc
+            self.board.drop_disc(col, player_id)
 
             # 5. Check for winner → announce and stop
             winner = self.board.check_winner()
@@ -64,5 +64,5 @@ class Game:
         return self.players[self.current_turn]
 
     @property
-    def current_piece(self) -> int:
+    def current_player_id(self) -> int:
         return self.current_turn + 1

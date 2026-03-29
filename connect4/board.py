@@ -14,15 +14,15 @@ class Board:
         self.connect_n = connect_n
         self.grid: list[list[int]] = [[0] * cols for _ in range(rows)]
 
-    def drop_piece(self, col: int, player: int) -> int | None:
-        """Drop a piece into the given column.
+    def drop_disc(self, col: int, player_id: int) -> int | None:
+        """Drop one disc into the column for the given player id.
 
         Returns the row where it landed, or None if the column is full.
         Does NOT validate col range — caller should use is_valid_move() first.
         """
         for row in range(self.rows - 1, -1, -1):
             if self.grid[row][col] == 0:
-                self.grid[row][col] = player
+                self.grid[row][col] = player_id
                 return row
         return None  # column is full
 
@@ -41,8 +41,8 @@ class Board:
         directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
         for r in range(self.rows):
             for c in range(self.cols):
-                player = self.grid[r][c]
-                if player == 0:
+                owner_id = self.grid[r][c]
+                if owner_id == 0:
                     continue
                 for dr, dc in directions:
                     # Check if connect_n in a row starting at (r, c) in direction (dr, dc)
@@ -51,9 +51,9 @@ class Board:
                     if not (0 <= end_r < self.rows and 0 <= end_c < self.cols):
                         continue
                     if all(
-                        self.grid[r + dr * i][c + dc * i] == player for i in range(self.connect_n)
+                        self.grid[r + dr * i][c + dc * i] == owner_id for i in range(self.connect_n)
                     ):
-                        return player
+                        return owner_id
         return None
 
     def is_full(self) -> bool:
@@ -61,11 +61,11 @@ class Board:
         return all(self.grid[0][c] != 0 for c in range(self.cols))
 
     def get_valid_moves(self) -> list[int]:
-        """Returns list of column indices that can still accept a piece."""
+        """Returns list of column indices that can still accept a disc."""
         return [c for c in range(self.cols) if self.is_valid_move(c)]
 
     def undo_move(self, col: int) -> None:
-        """Remove the topmost piece from the given column."""
+        """Remove the topmost disc from the given column."""
         for row in range(self.rows):
             if self.grid[row][col] != 0:
                 self.grid[row][col] = 0

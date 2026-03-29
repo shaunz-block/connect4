@@ -1,6 +1,17 @@
 # Connect N
 
-A configurable Connect N game implemented as a Python package. Two players take turns dropping pieces into a vertical grid. The first player to align N pieces in a row (horizontal, vertical, or diagonal) wins. Defaults to the classic Connect 4 rules on a 6×7 board.
+A configurable Connect N game implemented as a Python package. Two players take turns **dropping discs** into a vertical grid. The first player to align **N discs** in a row (horizontal, vertical, or diagonal) wins. Defaults to the classic Connect 4 rules on a 6×7 board.
+
+## Terminology
+
+| Term | Meaning |
+|------|---------|
+| **Drop (落子)** | The only move: choose a column so one disc falls to the lowest free cell in that column. |
+| **Disc** | One token on the board after a drop. The model does not use different shapes per player—only numbers. |
+| **Player id** | `1` or `2`: who owns a cell in `grid`, and whose turn it is. |
+| **Symbols `X` / `O`** | Used only when printing the board to the terminal (`X` = player 1, `O` = player 2). |
+
+`Board.drop_disc(col, player_id)` places one disc. `MinimaxBot` exposes `player_id` and `opponent_id` (both **player ids** `1` or `2`), set by `Game` before play.
 
 ## Features
 
@@ -88,8 +99,8 @@ Encapsulates all grid state and rule logic. Config is bound at creation time.
 
 | Method                    | Description                                                  |
 | ------------------------- | ------------------------------------------------------------ |
-| `drop_piece(col, player)` | Drops a piece; returns landing row or `None` if full         |
-| `undo_move(col)`          | Removes the topmost piece — used by minimax for backtracking |
+| `drop_disc(col, player_id)` | Drops one disc for **player id** `player_id`; returns landing row or `None` if full |
+| `undo_move(col)`          | Removes the topmost disc — used by minimax for backtracking |
 | `check_winner()`          | Returns winning player (1 or 2) or `None`                    |
 | `is_valid_move(col)`      | `True` if column is in range and not full                    |
 | `is_full()`               | `True` if every column is full (draw condition)              |
@@ -99,8 +110,8 @@ Encapsulates all grid state and rule logic. Config is bound at creation time.
 
 Key design decisions:
 
-- `grid[0]` is the **top** row; `grid[rows-1]` is the **bottom** row. Pieces fall from the bottom up.
-- Player values are `1` and `2`; `0` means empty.
+- `grid[0]` is the **top** row; `grid[rows-1]` is the **bottom** row. Discs fall toward the bottom (filled from bottom upward in each column).
+- Cell values are **player ids** `1` and `2`; `0` means empty.
 - `undo_move` enables minimax backtracking without copying the board.
 
 ### `player.py` — Player Protocol + HumanPlayer
@@ -111,11 +122,11 @@ Key design decisions:
 
 ### `bot.py` — MinimaxBot + evaluate()
 
-`MinimaxBot` uses recursive minimax with alpha-beta pruning. `piece` and `opponent` are assigned by `Game._setup_players()` before the game starts.
+`MinimaxBot` uses recursive minimax with alpha-beta pruning. Attributes `player_id` and `opponent_id` are set by `Game._setup_bot_players()` before the game starts.
 
-`**evaluate(board, player)`** — module-level pure function, called at depth-limit leaf nodes:
+**`evaluate(board, player_id)`** — module-level pure function, called at depth-limit leaf nodes:
 
-- **Center preference**: +6 per piece in the center column
+- **Center preference**: +6 per **own disc** in the center column
 - **Window scoring**: scans every `connect_n`-length window in 4 directions:
   - `n-1` own + 1 empty → +25 (one away from winning)
   - `n-2` own + 2 empty → +10 (building a threat)
@@ -137,7 +148,7 @@ Key design decisions:
 
 Orchestrates the game loop: setup → print board → get move → validate → drop → check win/draw → switch player.
 
-`_setup_players()` uses `hasattr(player, 'piece')` to assign piece numbers only to bots — `HumanPlayer` is unaffected.
+`_setup_bot_players()` uses `hasattr(player, 'player_id')` to detect bots and assign **player id** / **opponent id** only to them — `HumanPlayer` is unaffected.
 
 ## Running Tests
 
