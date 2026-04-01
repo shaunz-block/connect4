@@ -1,10 +1,17 @@
 """
 Alpha-Beta Pruning — interactive visualizer
 
-Tree structure:
+Mode 1 — MIN-layer pruning  (root = MAX):
              A  [MAX]
             /        \\
         B [MIN]     C [MIN]
+        / | \\       / | \\
+       b1  b2  b3  c1  c2  c3
+
+Mode 2 — MAX-layer pruning  (root = MIN):
+             A  [MIN]
+            /        \\
+        B [MAX]     C [MAX]
         / | \\       / | \\
        b1  b2  b3  c1  c2  c3
 """
@@ -78,10 +85,18 @@ def search(node, is_max, alpha, beta, depth=0):
                     f"{pad}  {RED}✂ PRUNE {pruned_child.label}"
                     f"  (α={YELLOW}{alpha}{RED} ≥ β={MAGENTA}{beta}{RED}){RESET}"
                 )
-            print(
-                f"{pad}{GRAY}  └─ MAX already has α={alpha}; "
-                f"MIN won't pick anything ≥{alpha} because β={beta} ≤ α.{RESET}"
-            )
+            if is_max:
+                # MAX-layer prune: MAX found a value exceeding MIN's beta
+                print(
+                    f"{pad}{GRAY}  └─ MIN already has β={beta}; "
+                    f"MAX won't be allowed to exceed β, but α={alpha} ≥ β already.{RESET}"
+                )
+            else:
+                # MIN-layer prune: MIN found a value below MAX's alpha
+                print(
+                    f"{pad}{GRAY}  └─ MAX already has α={alpha}; "
+                    f"MIN won't pick anything ≥{alpha} because β={beta} ≤ α.{RESET}"
+                )
             break
 
     node.result = best
@@ -131,6 +146,17 @@ def read_three_ints(prompt, color):
         print(f"{RED}  Please enter exactly 3 integers, e.g.:  3 12 8{RESET}")
 
 
+def choose_mode():
+    print(f"{CYAN}Choose pruning mode:{RESET}")
+    print(f"  {YELLOW}1{RESET}  MIN-layer pruning  (root = MAX  →  B, C are MIN nodes)")
+    print(f"  {MAGENTA}2{RESET}  MAX-layer pruning  (root = MIN  →  B, C are MAX nodes)")
+    while True:
+        raw = input(f"{BOLD}Mode [1/2] > {RESET}").strip()
+        if raw in ("1", "2"):
+            return int(raw)
+        print(f"{RED}  Enter 1 or 2.{RESET}")
+
+
 def main():
     print(
         BOLD + "╔══════════════════════════════════════════╗\n"
@@ -138,24 +164,46 @@ def main():
         "╚══════════════════════════════════════════╝" + RESET
     )
     print()
-    print(
-        GRAY + "Tree structure:\n"
-        "             A  [MAX]\n"
-        "            /        \\\n"
-        "        B [MIN]     C [MIN]\n"
-        "        / | \\       / | \\\n"
-        "       b1  b2  b3  c1  c2  c3" + RESET
-    )
+
+    mode = choose_mode()
+    root_is_max = mode == 1
+
+    if root_is_max:
+        tree_diagram = (
+            "             A  [MAX]\n"
+            "            /        \\\n"
+            "        B [MIN]     C [MIN]\n"
+            "        / | \\       / | \\\n"
+            "       b1  b2  b3  c1  c2  c3"
+        )
+        root_label = "A [MAX]"
+        b_label, c_label = "B [MIN]", "C [MIN]"
+        hint = f"{GRAY}Tip: make c1 < B's result to trigger pruning  e.g. B=3 12 8  C=2 4 6{RESET}"
+    else:
+        tree_diagram = (
+            "             A  [MIN]\n"
+            "            /        \\\n"
+            "        B [MAX]     C [MAX]\n"
+            "        / | \\       / | \\\n"
+            "       b1  b2  b3  c1  c2  c3"
+        )
+        root_label = "A [MIN]"
+        b_label, c_label = "B [MAX]", "C [MAX]"
+        hint = f"{GRAY}Tip: make c1 > B's result to trigger pruning  e.g. B=3 12 8  C=15 4 6{RESET}"
+
+    print()
+    print(GRAY + "Tree structure:\n" + tree_diagram + RESET)
+    print(hint)
     print()
 
     b = read_three_ints("B scores  b1 b2 b3 >", YELLOW)
     c = read_three_ints("C scores  c1 c2 c3 >", MAGENTA)
 
     root = Node(
-        "A [MAX]",
+        root_label,
         children=[
-            Node("B [MIN]", children=[Node(str(v), leaf_val=v) for v in b]),
-            Node("C [MIN]", children=[Node(str(v), leaf_val=v) for v in c]),
+            Node(b_label, children=[Node(str(v), leaf_val=v) for v in b]),
+            Node(c_label, children=[Node(str(v), leaf_val=v) for v in c]),
         ],
     )
 
@@ -174,11 +222,12 @@ def main():
     print(BOLD + "── Search trace ──────────────────────────────────" + RESET)
     print()
 
-    answer = search(root, is_max=True, alpha=float("-inf"), beta=float("inf"))
+    answer = search(root, is_max=root_is_max, alpha=float("-inf"), beta=float("inf"))
 
     print()
     print(BOLD + "── Final result ──────────────────────────────────" + RESET)
-    print(f"Optimal value for MAX: {GREEN}{BOLD}{answer}{RESET}")
+    player = "MAX" if root_is_max else "MIN"
+    print(f"Optimal value for {player}: {GREEN}{BOLD}{answer}{RESET}")
     print()
 
     print(BOLD + "── Tree with computed values ─────────────────────" + RESET)
